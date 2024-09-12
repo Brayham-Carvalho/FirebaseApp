@@ -37,6 +37,7 @@
             android:name=".SignActivity"
             android:exported="false">
         </activity>
+        <activity android:name=".AddActivity"></activity>
 
     </application>
 
