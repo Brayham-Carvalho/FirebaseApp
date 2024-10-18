@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import br.edu.ifes.firebaseapp.databinding.ItemMessageBinding
+
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -11,6 +12,7 @@ import java.util.Locale
 data class Message(
     var id: String? = null,
     val title: String = "",
+    val light: Float? = null,
     val date: Timestamp? = null
 )
 
@@ -30,21 +32,20 @@ class MessagesAdapter(private val messagesList: MutableList<Message>, private va
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val message = messagesList[position]
         holder.binding.messageTitle.text = message.title
+        holder.binding.messageLight.text = if (message.light != null) {
+            "Luminosidade: ${message.light}"
+        } else {
+            "Luminosidade não disponível"
+        }
         val date = message.date?.toDate()
         if (date != null) {
             val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm:ss", Locale.getDefault())
             holder.binding.messageDate.text = formatter.format(date)
-            // Configura o clique no item da lista
-            holder.binding.root.setOnClickListener {
-                onMessageClick(message)
-            }
-
-        } else {
-            // Lidar com o caso em que a data é nula, por exemplo:
-            holder.binding.messageDate.text = "Data indisponível"
         }
-        //val formatter = SimpleDateFormat("dd MMMM yyyy HH:mm:ss", Locale.getDefault())
-        //holder.binding.messageDate.text = formatter.format(date)
+        // Configura o clique no item da lista
+        holder.binding.root.setOnClickListener {
+            onMessageClick(message)
+        }
     }
 
     // Retorna o número de itens na lista
