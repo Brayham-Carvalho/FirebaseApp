@@ -15,6 +15,7 @@ data class Message(
     val title: String = "",
     val light: Float? = null,
     val location: GeoPoint? = null,
+    val address: String? = null,
     val date: Timestamp? = null
 )
 
@@ -39,11 +40,10 @@ class MessagesAdapter(private val messagesList: MutableList<Message>, private va
         } else {
             "Luminosidade não disponível"
         }
-        val location = message.location as? GeoPoint
-        holder.binding.messageLocation.text = if (location != null) {
-            "Latitude: ${location.latitude}, Longitude: ${location.longitude}"
+        holder.binding.messageLocation.text = if (message.address != null) {
+            "Endereço: ${message.address}"
         } else {
-            "Localização não disponível"
+            "Endereço não disponível"
         }
         val date = message.date?.toDate()
         if (date != null) {

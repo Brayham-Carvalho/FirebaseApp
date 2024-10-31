@@ -26,6 +26,17 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
 
+import java.io.IOException
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+
 class AddActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAddBinding
@@ -42,6 +53,8 @@ class AddActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var location: Location? = null
     private val LOCATION_PERMISSION_REQUEST_CODE = 1000
+
+    private var address: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -125,12 +138,22 @@ class AddActivity : AppCompatActivity() {
             // Cria o objeto mensagem
             val message = if (light != null) {
                 if (location != null) {
-                    hashMapOf(
-                        "title" to title,
-                        "light" to light,
-                        "location" to GeoPoint(location!!.latitude, location!!.longitude),
-                        "date" to FieldValue.serverTimestamp()
-                    )
+                    if (address != null) {
+                        hashMapOf(
+                            "title" to title,
+                            "light" to light,
+                            "location" to GeoPoint(location!!.latitude, location!!.longitude),
+                            "address" to address,
+                            "date" to FieldValue.serverTimestamp()
+                        )
+                    } else {
+                        hashMapOf(
+                            "title" to title,
+                            "light" to light,
+                            "location" to GeoPoint(location!!.latitude, location!!.longitude),
+                            "date" to FieldValue.serverTimestamp()
+                        )
+                    }
                 } else {
                     hashMapOf(
                         "title" to title,
@@ -140,11 +163,20 @@ class AddActivity : AppCompatActivity() {
                 }
             } else {
                 if (location != null) {
-                    hashMapOf(
-                        "title" to title,
-                        "location" to GeoPoint(location!!.latitude, location!!.longitude),
-                        "date" to FieldValue.serverTimestamp()
-                    )
+                    if (address != null) {
+                        hashMapOf(
+                            "title" to title,
+                            "location" to GeoPoint(location!!.latitude, location!!.longitude),
+                            "address" to address,
+                            "date" to FieldValue.serverTimestamp()
+                        )
+                    } else {
+                        hashMapOf(
+                            "title" to title,
+                            "location" to GeoPoint(location!!.latitude, location!!.longitude),
+                            "date" to FieldValue.serverTimestamp()
+                        )
+                    }
                 } else {
                     hashMapOf(
                         "title" to title,
@@ -174,6 +206,41 @@ class AddActivity : AppCompatActivity() {
         }
     }
 
+    private fun getAddressFromLocation(latitude: Double, longitude: Double) {
+        CoroutineScope(Dispatchers.IO).launch {
+            binding.locationTextView.text = "Localizando endereço..."
+            withContext(Dispatchers.IO) {
+                try {
+                    val client = OkHttpClient()
+                    val url = "https://nominatim.openstreetmap.org/reverse?lat=$latitude&lon=$longitude&format=json"
+
+                    val request = Request.Builder()
+                        .url(url)
+                        .build()
+
+                    client.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) {
+                            withContext(Dispatchers.Main) {
+                                binding.locationTextView.text = "Endereço não encontrado"
+                            }
+                        } else {
+                            val jsonResponse = JSONObject(response.body!!.string())
+                            address = jsonResponse.getString("display_name")
+                            withContext(Dispatchers.Main) {
+                                binding.locationTextView.text = address
+                            }
+                        }
+                    }
+                } catch (e: IOException) {
+                    withContext(Dispatchers.Main) {
+                        binding.locationTextView.text = "Endereço não encontrado"
+                    }
+                }
+            }
+        }
+    }
+
+
     private fun getLastKnownLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
@@ -181,8 +248,8 @@ class AddActivity : AppCompatActivity() {
                 lastKnownLocation?.let {
                     // Guarda na variável global
                     location = it
-                    // Exibir a localização no TextView
-                    binding.locationTextView.text = "Latitude: ${it.latitude}, Longitude: ${it.longitude}"
+                    // Obter o endereço a partir da localização
+                    getAddressFromLocation(it.latitude, it.longitude)
                 } ?: run {
                     binding.locationTextView.text = "Localização não encontrada"
                 }
