@@ -1,7 +1,7 @@
 # FirebaseApp
 
 ## Descrição
-Este projeto é um aplicativo Android desenvolvido em Kotlin que demonstra a integração com Firebase para gerenciar mensagens, utilizandodados de sensor de luz e localização (latitude, longitude e endereço).
+Este projeto é um aplicativo Android desenvolvido em Kotlin que demonstra a integração com Firebase para gerenciar mensagens, utilizando dados de sensor de luz e localização (latitude, longitude e endereço).
 ## Funcionalidades
 * Adicionar mensagens com título.
 * Capturar o valor do sensor de luz.
